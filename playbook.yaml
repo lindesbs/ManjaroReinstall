@@ -1,0 +1,24 @@
+---
+- name: Reinstall all packages on Manjaro system
+  hosts: all
+  become: false
+  gather_facts: false
+  vars:
+    installed_packages_file: "{{ playbook_dir }}/installed_packages.txt"
+
+  tasks:
+    - name: Read installed packages from file
+      ansible.builtin.slurp:
+        src: "{{ installed_packages_file }}"
+      register: installed_packages_raw
+
+    - name: Decode installed packages
+      ansible.builtin.set_fact:
+        installed_packages: "{{ installed_packages_raw.content | b64decode | split('\n') }}"
+
+    - name: Install packages from the list
+      community.general.pacman:
+        name: "{{ installed_packages }}"
+        state: present
+        executable: yay
+        extra_args: --builddir /var/cache/yay
